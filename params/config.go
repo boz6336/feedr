@@ -351,6 +351,12 @@ var NetworkNames = map[string]string{
 	RinkebyChainConfig.ChainID.String(): "rinkeby",
 	GoerliChainConfig.ChainID.String():  "goerli",
 	SepoliaChainConfig.ChainID.String(): "sepolia",
+	// CHANGE(taiko): add Taiko network name.
+	TaikoMainnetNetworkID.String():   "Taiko",
+	TaikoInternal1NetworkID.String(): "Taiko Internal 1",
+	TaikoInternal2NetworkID.String(): "Taiko Internal 2",
+	SnæfellsjökullNetworkID.String(): "Taiko Alpha-1 (Snæfellsjökull)",
+	AskjaNetworkID.String():          "Taiko Alpha-2 (Askja)",
 }
 
 // TrustedCheckpoint represents a set of post-processed trie roots (CHT and
@@ -450,6 +456,9 @@ type ChainConfig struct {
 	// Various consensus engines
 	Ethash *EthashConfig `json:"ethash,omitempty"`
 	Clique *CliqueConfig `json:"clique,omitempty"`
+
+	// CHANGE(taiko): Taiko network flag.
+	Taiko bool `json:"taiko"`
 }
 
 // EthashConfig is the consensus engine configs for proof-of-work based sealing.
@@ -482,6 +491,9 @@ func (c *ChainConfig) Description() string {
 	}
 	banner += fmt.Sprintf("Chain ID:  %v (%s)\n", c.ChainID, network)
 	switch {
+	// CHANGE(taiko): print Taiko consensus engine in banner.
+	case c.Taiko:
+		banner += "Consensus: Taiko\n"
 	case c.Ethash != nil:
 		if c.TerminalTotalDifficulty == nil {
 			banner += "Consensus: Ethash (proof-of-work)\n"

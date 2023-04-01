@@ -22,6 +22,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/core/rawdb"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/trie"
 )
@@ -35,6 +36,9 @@ type PayloadAttributes struct {
 	Random                common.Hash         `json:"prevRandao"            gencodec:"required"`
 	SuggestedFeeRecipient common.Address      `json:"suggestedFeeRecipient" gencodec:"required"`
 	Withdrawals           []*types.Withdrawal `json:"withdrawals"`
+	// CHANGE(taiko): extra fields.
+	BlockMetadata *BlockMetadata  `json:"blockMetadata" gencodec:"required"`
+	L1Origin      *rawdb.L1Origin `json:"l1Origin" gencodec:"required"`
 }
 
 // JSON type overrides for PayloadAttributes.
@@ -42,9 +46,33 @@ type payloadAttributesMarshaling struct {
 	Timestamp hexutil.Uint64
 }
 
-//go:generate go run github.com/fjl/gencodec -type ExecutableData -field-override executableDataMarshaling -out gen_ed.go
+//go:generate go run github.com/fjl/gencodec -type BlockMetadata -field-override blockMetadataMarshaling -out gen_blockmetadata.go
+
+// CHANGE(taiko): BlockMetadata represents a `BlockMetadata` struct defined in
+// protocol's `LibData`.
+type BlockMetadata struct {
+	// Fields defined in `LibData.blockMetadata`.
+	Beneficiary common.Address `json:"beneficiary"     gencodec:"required"`
+	GasLimit    uint64         `json:"gasLimit"     gencodec:"required"`
+	Timestamp   uint64         `json:"timestamp"     gencodec:"required"`
+	MixHash     common.Hash    `json:"mixHash"     gencodec:"required"`
+	ExtraData   []byte         `json:"extraData"     gencodec:"required"`
+
+	// Extra fields required in go-taiko.
+	TxList         []byte   `json:"txList"     gencodec:"required"`
+	HighestBlockID *big.Int `json:"highestBlockID"     gencodec:"required"`
+}
+
+// CHANGE(taiko): JSON type overrides for BlockMetadata.
+type blockMetadataMarshaling struct {
+	Timestamp hexutil.Uint64
+	TxList    hexutil.Bytes
+	ExtraData hexutil.Bytes
+}
 
 // ExecutableData is the data necessary to execute an EL payload.
+//
+//go:generate go run github.com/fjl/gencodec -type ExecutableData -field-override executableDataMarshaling -out gen_ed.go
 type ExecutableData struct {
 	ParentHash    common.Hash         `json:"parentHash"    gencodec:"required"`
 	FeeRecipient  common.Address      `json:"feeRecipient"  gencodec:"required"`
@@ -57,10 +85,11 @@ type ExecutableData struct {
 	GasUsed       uint64              `json:"gasUsed"       gencodec:"required"`
 	Timestamp     uint64              `json:"timestamp"     gencodec:"required"`
 	ExtraData     []byte              `json:"extraData"     gencodec:"required"`
-	BaseFeePerGas *big.Int            `json:"baseFeePerGas" gencodec:"required"`
+	BaseFeePerGas *big.Int            `json:"-" gencodec:"required"` // CHANGE(taiko): disable EIP-1559 temporarily
 	BlockHash     common.Hash         `json:"blockHash"     gencodec:"required"`
 	Transactions  [][]byte            `json:"transactions"  gencodec:"required"`
 	Withdrawals   []*types.Withdrawal `json:"withdrawals"`
+	TxHash        common.Hash         `json:"txHash"` // CHANGE(taiko): allow passing txHash directly instead of transactions list
 }
 
 // JSON type overrides for executableData.
