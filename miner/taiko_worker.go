@@ -2,6 +2,7 @@ package miner
 
 import (
 	"fmt"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/beacon/engine"
 	"github.com/ethereum/go-ethereum/common"
@@ -17,6 +18,7 @@ func (w *worker) sealBlockWith(
 	parent common.Hash,
 	timestamp uint64,
 	blkMeta *engine.BlockMetadata,
+	baseFeePerGas *big.Int,
 ) (*types.Block, error) {
 	// Decode transactions bytes.
 	var txs types.Transactions
@@ -31,14 +33,15 @@ func (w *worker) sealBlockWith(
 	}
 
 	params := &generateParams{
-		timestamp:   timestamp,
-		forceTime:   true,
-		parentHash:  parent,
-		coinbase:    blkMeta.Beneficiary,
-		random:      blkMeta.MixHash,
-		withdrawals: nil,
-		noUncle:     true,
-		noTxs:       false,
+		timestamp:     timestamp,
+		forceTime:     true,
+		parentHash:    parent,
+		coinbase:      blkMeta.Beneficiary,
+		random:        blkMeta.MixHash,
+		withdrawals:   nil,
+		noUncle:       true,
+		noTxs:         false,
+		baseFeePerGas: baseFeePerGas,
 	}
 
 	env, err := w.prepareWork(params)
