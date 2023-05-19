@@ -480,7 +480,7 @@ func HeaderParentHashFromRLP(header []byte) common.Hash {
 func CalcWithdrawalsRootTaiko(withdrawals []*Withdrawal) common.Hash {
 	// only process withdrawals/deposits of 8 minimum
 	if len(withdrawals) == 0 {
-		return EmptyWithdrawalsHash
+		return EmptyCodeHash // a known keccak256 hash of the empty payload bytes.
 	}
 
 	var b []byte
